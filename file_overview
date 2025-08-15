@@ -1,0 +1,198 @@
+# API‑Sports Cheat Sheet — NBA (v2), MLB, NFL
+
+**Purpose:** Fast reference to the endpoints and patterns you’ll actually use to build prediction models (games, odds, team/player stats, standings, injuries, and H2H). Includes base URLs, key params, and copy‑paste Python.
+
+---
+
+## Auth & Headers (all sports)
+
+```python
+HEADERS = {
+    "x-rapidapi-key": "<YOUR_RAPIDAPI_KEY>",
+    # host differs per API (see each sport below)
+}
+```
+
+Common envelope fields: `response` (data), `paging.current/total` (pagination), `errors` (messages).
+
+---
+
+## NBA
+
+**Base URL:** `https://v2.nba.api-sports.io`
+**Host header:** `x-rapidapi-host: v2.nba.api-sports.io`
+
+### Core endpoints for modeling
+
+| Area                     | Path                  | Common Params                            |
+| ------------------------ | --------------------- | ---------------------------------------- |
+| Leagues                  | `/leagues`            | `id`, `search`                           |
+| Seasons                  | `/seasons`            | —                                        |
+| Teams                    | `/teams`              | `league`, `season`, `id`                 |
+| Players                  | `/players`            | `team`, `season`, `id`, `search`         |
+| Player Stats             | `/players/statistics` | `player`, `team`, `season`, `league`     |
+| Games (schedule/results) | `/games`              | `league`, `season`, `team`, `date`, `id` |
+| Live scores              | `/games/live`         | `league`, `season`                       |
+| H2H (matchup history)    | `/games/h2h`          | `team1`, `team2`                         |
+| Standings                | `/standings`          | `league`, `season`, `stage`              |
+| Odds                     | `/odds`               | `game`, `bookmaker`, `league`, `season`  |
+| Bookmakers               | `/bookmakers`         | —                                        |
+| Bets (odds market lines) | `/bets`               | `game`, `bookmaker`                      |
+
+### Quick Python
+
+```python
+import requests, datetime as dt
+HOST = "v2.nba.api-sports.io"
+headers = {"x-rapidapi-key": "<KEY>", "x-rapidapi-host": HOST}
+
+# Games by date
+params = {"date": dt.date.today().isoformat()}
+games = requests.get(f"https://{HOST}/games", headers=headers, params=params).json()
+
+# Odds for a game
+odds = requests.get(f"https://{HOST}/odds", headers=headers, params={"game": <GAME_ID>}).json()
+
+# Player stats for season
+pstats = requests.get(f"https://{HOST}/players/statistics", headers=headers,
+                      params={"player": <PLAYER_ID>, "season": "2024-2025"}).json()
+```
+
+**Feature ideas (NBA):** pace/possessions via team stats, recent form (last N games), rest days (from schedule), H2H efficiency splits, injuries (if available), market lines (moneyline/spread/total) from `/odds`.
+
+---
+
+## MLB (Basebal)
+
+**Base URL:** `https://v1.baseball.api-sports.io`
+**Host header:** `x-rapidapi-host: v1.baseball.api-sports.io`
+
+### Core endpoints for modeling
+
+| Area                     | Path                  | Common Params                            |
+| ------------------------ | --------------------- | ---------------------------------------- |
+| Leagues                  | `/leagues`            | `season`, `country`, `search`, `id`      |
+| Seasons                  | `/seasons`            | —                                        |
+| Teams                    | `/teams`              | `league`, `season`, `id`                 |
+| Team Statistics          | `/statistics`         | `team`, `season`, `league`               |
+| Players                  | `/players`            | `team`, `season`, `id`, `search`         |
+| Player Statistics        | `/players/statistics` | `player`, `season`, `team`, `league`     |
+| Games (schedule/results) | `/games`              | `league`, `season`, `team`, `date`, `id` |
+| Live scores              | `/games/live`         | `league`, `season`                       |
+| H2H                      | `/games/h2h`          | `team1`, `team2`                         |
+| Standings                | `/standings`          | `league`, `season`, `stage`              |
+| Odds                     | `/odds`               | `game`, `bookmaker`, `league`, `season`  |
+| Bookmakers               | `/bookmakers`         | —                                        |
+| Bets                     | `/bets`               | `game`, `bookmaker`                      |
+
+### Quick Python
+
+```python
+import requests, datetime as dt
+HOST = "v1.baseball.api-sports.io"
+headers = {"x-rapidapi-key": "<KEY>", "x-rapidapi-host": HOST}
+
+# Games by date
+params = {"date": dt.date.today().isoformat()}
+mlb_games = requests.get(f"https://{HOST}/games", headers=headers, params=params).json()
+
+# Odds for a game
+mlb_odds = requests.get(f"https://{HOST}/odds", headers=headers, params={"game": <GAME_ID>}).json()
+
+# Team season stats
+team_stats = requests.get(f"https://{HOST}/statistics", headers=headers,
+                          params={"team": <TEAM_ID>, "season": 2024}).json()
+```
+
+**Feature ideas (MLB):** starting pitcher stats & handedness (from player stats + lineup if available), bullpen usage (rolling sums), park factors (join externally), weather (external), travel/rest, team batting splits vs R/L, recent form, market lines (ML/Total/Run Line) from `/odds`.
+
+---
+
+## NFL (American Football)
+
+**Base URL:** `https://v1.american-football.api-sports.io`
+**Host header:** `x-rapidapi-host: v1.american-football.api-sports.io`
+
+### Core endpoints for modeling
+
+| Area                     | Path                     | Common Params                            |
+| ------------------------ | ------------------------ | ---------------------------------------- |
+| Leagues                  | `/leagues`               | `season`, `country`, `search`, `id`      |
+| Seasons                  | `/seasons`               | —                                        |
+| Teams                    | `/teams`                 | `league`, `season`, `id`                 |
+| Team Statistics          | `/teams/statistics`      | `team`, `season`, `league`               |
+| Players                  | `/players`               | `team`, `season`, `id`, `search`         |
+| Player Statistics        | `/players/statistics`    | `player`, `season`, `team`, `league`     |
+| Games (schedule/results) | `/games`                 | `league`, `season`, `team`, `date`, `id` |
+| Events (play‑by‑play)    | `/events`                | `game`                                   |
+| Live scores              | `/games/live`            | `league`, `season`                       |
+| H2H                      | `/games/h2h`             | `team1`, `team2`                         |
+| Standings                | `/standings`             | `league`, `season`, `stage`              |
+| Conferences              | `/standings/conferences` | `league`, `season`                       |
+| Divisions                | `/standings/divisions`   | `league`, `season`                       |
+| Injuries                 | `/injuries`              | `team`, `season`                         |
+| Odds                     | `/odds`                  | `game`, `bookmaker`, `league`, `season`  |
+| Bookmakers               | `/bookmakers`            | —                                        |
+| Bets                     | `/bets`                  | `game`, `bookmaker`                      |
+
+### Quick Python
+
+```python
+import requests, datetime as dt
+HOST = "v1.american-football.api-sports.io"
+headers = {"x-rapidapi-key": "<KEY>", "x-rapidapi-host": HOST}
+
+# Week’s games (by date)
+params = {"date": dt.date.today().isoformat()}
+nfl_games = requests.get(f"https://{HOST}/games", headers=headers, params=params).json()
+
+# Odds for a game
+nfl_odds = requests.get(f"https://{HOST}/odds", headers=headers, params={"game": <GAME_ID>}).json()
+
+# Team season stats
+nfl_team = requests.get(f"https://{HOST}/teams/statistics", headers=headers,
+                        params={"team": <TEAM_ID>, "season": 2024}).json()
+```
+
+**Feature ideas (NFL):** QB availability & injuries, offensive/defensive efficiency (EPA proxy via team/player stats or external), pace (seconds/play; derive from events/schedule), travel/time‑zone diffs, weather (external), market lines (spread/total/moneyline).
+
+---
+
+## Modeling Checklist (all sports)
+
+* **Entity keys:** Consistently store `league_id`, `season`, `game_id`, `team_id`, `player_id`.
+* **Joins:**
+
+  * Games ↔ Odds (by `game_id`)
+  * Games ↔ Team stats (by `team_id`, `season`)
+  * Games ↔ Player stats (by `team_id`/`player_id`, `season`)
+  * Games ↔ Standings (by `league_id`, `season`)
+* **Windows:** Build rolling windows (3/5/10 games) for form.
+* **Backfill:** Handle missing odds or stats; keep `errors` log from envelope.
+* **Pagination:** If `paging.total > paging.current`, iterate pages.
+* **Caching:** Cache static refs (leagues, teams) daily.
+
+## Mini Retry/Paging Helper
+
+```python
+import requests, time
+
+def get_all(path, host, headers, **params):
+    page = int(params.pop("page", 1))
+    out = []
+    while True:
+        r = requests.get(f"https://{host}{path}", headers=headers, params={**params, "page": page}, timeout=20)
+        if r.status_code == 429:
+            time.sleep(int(r.headers.get("Retry-After", 2)))
+            continue
+        r.raise_for_status()
+        data = r.json()
+        out.extend(data.get("response", []))
+        pg = data.get("paging", {})
+        if pg.get("current", 1) >= pg.get("total", 1):
+            break
+        page += 1
+    return out
+```
+
+> Need me to add **concrete feature extraction snippets** (e.g., rolling team form, pitcher splits, pace metrics) next?
